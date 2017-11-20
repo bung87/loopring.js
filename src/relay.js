@@ -10,7 +10,7 @@ const abi = require('ethereumjs-abi');
 
 function relay(host) {
     const request = {"jsonrpc": "2.0"};
-    const validataor = new Validator();
+    const validator = new Validator();
 
     const orderSchema = Joi.object().keys({
         protocol: Joi.string().regex(/^0x[0-9a-fA-F]{40}$/i),
@@ -28,7 +28,7 @@ function relay(host) {
 
     this.getTransactionCount = async function (add, tag) {
 
-        if (!validataor.isValidETHAddress(add)) {
+        if (!validator.isValidETHAddress(add)) {
             throw new Error('invalid ETH address');
         }
 
@@ -60,7 +60,7 @@ function relay(host) {
     }
 
     this.getAccountBalance = async function (add, tag) {
-        if (!validataor.isValidETHAddress(add)) {
+        if (!validator.isValidETHAddress(add)) {
             throw new Error('invalid ETH address');
         }
 
@@ -142,11 +142,11 @@ function relay(host) {
 
     this.getTokenBalance = async function (token, add, tag) {
 
-        if (!validataor.isValidETHAddress(add)) {
+        if (!validator.isValidETHAddress(add)) {
             throw new Error('invalid ETH address' + add);
         }
 
-        if (!validataor.isValidETHAddress(token)) {
+        if (!validator.isValidETHAddress(token)) {
 
             throw new Error('invalid token contract Address ' + token);
         }
@@ -171,15 +171,15 @@ function relay(host) {
 
     this.getTokenAllowance = async function (token, owner, spender, tag) {
 
-        if (!validataor.isValidETHAddress(owner)) {
+        if (!validator.isValidETHAddress(owner)) {
             throw new Error('invalid owner address');
         }
 
-        if (!validataor.isValidETHAddress(spender)) {
+        if (!validator.isValidETHAddress(spender)) {
             throw new Error('invalid spender address');
         }
 
-        if (!validataor.isValidETHAddress(token)) {
+        if (!validator.isValidETHAddress(token)) {
 
             throw new Error('invalid token Contract Address');
         }
@@ -208,11 +208,11 @@ function relay(host) {
 
     this.setTokenAllowance = async function (token, spender, value, privateKey, gasLimit, gasPrice) {
 
-        if (!validataor.isValidETHAddress(spender)) {
+        if (!validator.isValidETHAddress(spender)) {
             throw new Error('invalid spender address');
         }
 
-        if (!validataor.isValidETHAddress(token)) {
+        if (!validator.isValidETHAddress(token)) {
 
             throw new Error('invalid token Contract Address');
         }
@@ -252,11 +252,11 @@ function relay(host) {
 
     this.transferToken = async function (privateKey, to, token, value, gasLimit, gasPrice) {
 
-        if (!validataor.isValidETHAddress(to)) {
+        if (!validator.isValidETHAddress(to)) {
             throw new Error('invalid spender address');
         }
 
-        if (!validataor.isValidETHAddress(token)) {
+        if (!validator.isValidETHAddress(token)) {
 
             throw new Error('invalid token Contract Address');
         }
@@ -319,6 +319,11 @@ function relay(host) {
         if (!validation) {
             throw new Error('Invalid Loopring Order');
         }
+
+        if(!validator.isValidPrivateKey(account.privateKey)){
+            throw new Error('invalid private key');
+        }
+
         const hash = abi.soliditySHA3(orderTypes, [rawOrder.protocol, rawOrder.owner, rawOrder.tokenS, rawOrder.tokenB,
             new BN(Number(rawOrder.amountS).toString(10), 10),
             new BN(Number(rawOrder.amountB).toString(10), 10),
