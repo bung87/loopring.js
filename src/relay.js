@@ -5,10 +5,26 @@ const ethUtil = require('ethereumjs-util');
 const Joi = require('joi');
 const BigNumber = require('bignumber.js');
 const _ = require('lodash');
+const signer = require('./signer');
+const abi = require('ethereumjs-abi');
 
 function relay(host) {
     const request = {"jsonrpc": "2.0"};
     const validataor = new Validator();
+
+    const orderSchema = Joi.object().keys({
+        protocol: Joi.string().regex(/^0x[0-9a-fA-F]{40}$/i),
+        owner: Joi.string().regex(/^0x[0-9a-fA-F]{40}$/i),
+        tokenS: Joi.string().regex(/^0x[0-9a-fA-F]{40}$/i),
+        tokenB: Joi.string().regex(/^0x[0-9a-fA-F]{40}$/i),
+        buyNoMoreThanAmountB: Joi.boolean(),
+        marginSplitPercentage: Joi.number().integer().min(0).max(100),
+        r: Joi.number().integer().min(0),
+        s: Joi.string().regex(/^0x[0-9a-fA-F]{64}$/i),
+        v: Joi.string().regex(/^0x[0-9a-fA-F]{64}$/i),
+    }).with('protocol', 'owner', 'tokenS', 'tokenB', 'buyNoMoreThanAmountB', 'marginSplitPercentage', 'r', 's', 'v');
+
+    const orderTypes = ['address', 'address', 'address', 'address', 'uint', 'uint', 'uint', 'uint', 'uint', 'uint', 'bool', 'uint8'];
 
     this.getTransactionCount = async function (add, tag) {
 
@@ -34,13 +50,14 @@ function relay(host) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(request)
-        }).then(res => res.json()).then(res => {
-            if (res.error) {
-                throw new Error(res.error.message);
-            }
-            return res.result;
-        });
-    };
+        }).then(res = > res.json()).then(res = > {
+            if(res.error){
+            throw new Error(res.error.message);
+        }
+        return res.result;
+    })
+
+    }
 
     this.getAccountBalance = async function (add, tag) {
         if (!validataor.isValidETHAddress(add)) {
@@ -65,12 +82,13 @@ function relay(host) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(request)
-        }).then(res => res.json()).then(res => {
-            if (res.error) {
-                throw new Error(res.error.message);
-            }
-            return new BigNumber(Number(validHex(res.result)));
-        });
+        }).then(res = > res.json()).then(res = > {
+            if(res.error){
+            throw new Error(res.error.message);
+        }
+        return new BigNumber(Number(validHex(res.result)));
+    })
+
     };
 
     this.call = async function (data, tag) {
@@ -92,12 +110,12 @@ function relay(host) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(request)
-        }).then(res => res.json()).then(res => {
-            if (res.error) {
-                throw new Error(res.error.message);
-            }
-            return validHex(res.result);
-        });
+        }).then(res = > res.json()).then(res = > {
+            if(res.error){
+            throw new Error(res.error.message);
+        }
+        return validHex(res.result);
+    })
 
     };
 
@@ -113,12 +131,12 @@ function relay(host) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(request)
-        }).then(res => res.json()).then(res => {
-            if (res.error) {
-                throw new Error(res.error.message);
-            }
-            return res.result;
-        });
+        }).then(res = > res.json()).then(res = > {
+            if(res.error){
+            throw new Error(res.error.message);
+        }
+        return res.result;
+    });
 
     };
 
@@ -149,7 +167,6 @@ function relay(host) {
             throw new Error('invalid  tag:' + tag);
         }
         return new BigNumber(Number(await this.call(params, tag)));
-
     };
 
     this.getTokenAllowance = async function (token, owner, spender, tag) {
@@ -227,9 +244,10 @@ function relay(host) {
             data
         };
 
-        const rawtx = await this.generateTx(tx, privateKey);
+        const rawtx = await
+        this.generateTx(tx, privateKey);
 
-        await this.sendSignedTx(rawtx.signedTx);
+      return await this.sendSignedTx(rawtx.signedTx);
     };
 
     this.transferToken = async function (privateKey, to, token, value, gasLimit, gasPrice) {
@@ -271,7 +289,7 @@ function relay(host) {
 
         const tx = await this.generateTx(rawtx, privateKey);
 
-        await  this.sendSignedTx(tx.signedTx)
+       return await this.sendSignedTx(tx.signedTx)
 
     };
 
@@ -281,55 +299,104 @@ function relay(host) {
         request.params = order;
         request.id = id();
 
-        return await fetch(host, {
+        return await
+        fetch(host, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(request)
-        }).then(r => r.json()).then(res => {
+        }).then(r = > r.json()).then(res = > {
             return res;
-        });
+    });
 
     };
 
-    this.cancelLoopringOrder = async function (rawTX, privateKey) {
-        const tx = await this.generateTx(rawTX, privateKey);
+    this.cancelLoopringOrder = async function (rawOrder, account, rawTx, cancelAmount) {
+
+        const validation = Joi.validate(rawOrder, orderSchema);
+
+        if (!validation) {
+            throw new Error('Invalid Loopring Order');
+        }
+        const hash = abi.soliditySHA3(orderTypes, [rawOrder.protocol, rawOrder.owner, rawOrder.tokenS, rawOrder.tokenB,
+            new BN(Number(rawOrder.amountS).toString(10), 10),
+            new BN(Number(rawOrder.amountB).toString(10), 10),
+            new BN(Number(rawOrder.timestamp).toString(10), 10),
+            new BN(Number(rawOrder.ttl).toString(10), 10),
+            new BN(Number(rawOrder.salt).toString(10), 10),
+            new BN(Number(rawOrder.lrcFee).toString(10), 10),
+            rawOrder.buyNoMoreThanAmountB,
+            rawOrder.marginSplitPercentage]);
+
+        const finalHash = ethUtil.hashPersonalMessage(hash);
+        const owner = ethUtil.ecrecover(finalHash, rawOrder.v, rawOrder.r, rawOrder.s);
+
+        const publicKey = ethUtil.privateToPublic(account.privateKey);
+        const address = ethUtil.publicToAddress(publicKey);
+
+        if (owner !== ethUtil.toChecksumAddress("0x" + address.toString('hex'))){
+            throw new Error('the private Key you provided is not the owner of the order');
+        }
+
+        const order = {
+            addresses: [rawOrder.owner, rawOrder.tokenS, rawOrder.tokenB],
+            orderValues: [rawOrder.amountS, rawOrder.amountB, rawOrder.timestamp, rawOrder.ttl, rawOrder.salt, rawOrder.lrcFee, cancelAmount],
+            buyNoMoreThanAmountB: rawOrder.buyNoMoreThanAmountB,
+            marginSplitPercentage: rawOrder.marginSplitPercentage,
+            v:rawOrder.v,
+            r:rawOrder.r,
+            s:rawOrder.s
+        };
+
+        const data = abi.rawEncode(['address[3]', 'uint[7]', 'bool', 'uint8', 'uint8', 'bytes32', 'bytes32'], [order.addresses, order.orderValues, order.buyNoMoreThanAmountB, order.marginSplitPercentage, order.v, order.r, order.s]).toString('hex');
+        const method = abi.methodID('cancelOrder', ['address[3]', 'uint[7]', 'bool', 'uint8', 'uint8', 'bytes32', 'bytes32']).toString('hex');
+
+        rawTx.data = '0x' + method + data;
+        const tx = signer.generateTx(rawTX, account);
         return await this.sendSignedTx(tx.signedTx);
-    };
+    }
 
     this.getOrders = async function (market, address, status, pageIndex, pageSize, contractVersion) {
 
         request.method = 'getOrders';
-        request.params = {market, address, status,contractVersion, pageIndex, pageSize};
+        request.params = {market, address, status, contractVersion, pageIndex, pageSize};
         request.id = id();
 
-        return await fetch(host, {
+        return await
+        fetch(host, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(request)
-        }).then(r => r.json()).then(res => {
+        }).then(r = > r.json()
+    ).
+        then(res = > {
             return res;
-        });
+    })
+        ;
 
     };
 
     this.getDepth = async function (market, pageIndex, pageSize, contractVersion) {
         request.method = 'getDepth';
-        request.params = {market, pageIndex, pageSize,contractVersion};
+        request.params = {market, pageIndex, pageSize, contractVersion};
         request.id = id();
 
-        return await fetch(host, {
+        return await
+        fetch(host, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(request)
-        }).then(r => r.json()).then(res => {
+        }).then(r = > r.json()
+    ).
+        then(res = > {
             return res;
-        });
+    })
+        ;
     };
 
     this.getTicker = async function (market) {
@@ -338,32 +405,40 @@ function relay(host) {
         request.params = {market};
         request.id = id();
 
-        return await fetch(host, {
+        return await
+        fetch(host, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(request)
-        }).then(r => r.json()).then(res => {
+        }).then(r = > r.json()
+    ).
+        then(res = > {
             return res;
-        });
+    })
+        ;
     };
 
-    this.getFills = async function (market, address, pageIndex, pageSize,contractVersion) {
+    this.getFills = async function (market, address, pageIndex, pageSize, contractVersion) {
 
         request.method = 'getFills';
-        request.params = {market, address, pageIndex, pageSize,contractVersion};
+        request.params = {market, address, pageIndex, pageSize, contractVersion};
         request.id = id();
 
-        return await fetch(host, {
+        return await
+        fetch(host, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(request)
-        }).then(r => r.json()).then(res => {
+        }).then(r = > r.json()
+    ).
+        then(res = > {
             return res;
-        });
+    })
+        ;
 
     };
 
@@ -373,22 +448,26 @@ function relay(host) {
         request.params = {market, interval, size};
         request.id = id();
 
-        return await fetch(host, {
+        return await
+        fetch(host, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(request)
-        }).then(r => r.json()).then(res => {
+        }).then(r = > r.json()
+    ).
+        then(res = > {
             return res;
-        });
+    })
+        ;
 
     };
 
-    this.getRingMined = async function (ringHash, orderHash, miner, pageIndex, pageSize,contractVersion) {
+    this.getRingMined = async function (ringHash, orderHash, miner, pageIndex, pageSize, contractVersion) {
 
         request.method = 'getRingMined';
-        request.params = {ringHash, orderHash, miner, pageIndex, pageSize,contractVersion};
+        request.params = {ringHash, orderHash, miner, pageIndex, pageSize, contractVersion};
         request.id = id();
 
         return await fetch(host, {
@@ -397,7 +476,7 @@ function relay(host) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(request)
-        }).then(r => r.json()).then(res => {
+        }).then(r = > r.json()).then(res = > {
             return res;
         });
 
@@ -415,10 +494,10 @@ function relay(host) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(request)
-        }).then(r => r.json()).then(res => {
+        }).then(r = > r.json()).then(res = > {
             return res;
-        });
-    };
+    })
+    }
 
     function id() {
         return crypto.randomBytes(16).toString('hex');
