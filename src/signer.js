@@ -3,6 +3,8 @@ const _ = require('lodash');
 const Joi = require('joi');
 const Transaction = require('ethereumjs-tx');
 const ethUtil = require('ethereumjs-util');
+const BigNumber = require('bignumber.js');
+
 
 const txSchema = Joi.object().keys({
     nonce: Joi.string().regex(/^0x[0-9a-fA-F]{1,64}$/i),
