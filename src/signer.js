@@ -4,6 +4,7 @@ const Joi = require('joi');
 const Transaction = require('ethereumjs-tx');
 const ethUtil = require('ethereumjs-util');
 const BigNumber = require('bignumber.js');
+const Validataor = require('./validator.js');
 
 
 const txSchema = Joi.object().keys({
@@ -16,9 +17,10 @@ const txSchema = Joi.object().keys({
     chainId: Joi.number().integer().min(1)
 }).with('nonce', 'gasPrice', 'gasLimit', 'to', 'value', 'data', 'chainId');
 
+const validator =  new Validataor();
+
 exports.solSHA3 = function (types, data) {
-    const hash = abi.soliditySHA3(types, data);
-    return hash;
+    return  abi.soliditySHA3(types, data);
 };
 
 exports.signEthTx = function (tx, privateKey) {
@@ -66,6 +68,11 @@ this.generateTx = function (rawTx, account) {
 
         throw new Error('privateKey or balance is missing');
 
+    }
+
+    if(!validator.isValidPrivateKey(account.privateKey)){
+
+        throw new Error('invalid private key')
     }
 
     const gasLimit = new BigNumber(Number(rawTx.gasLimit));
