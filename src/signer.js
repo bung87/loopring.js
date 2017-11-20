@@ -3,6 +3,7 @@ const _ = require('lodash');
 const Joi = require('joi');
 const Transaction = require('ethereumjs-tx');
 const ethUtil = require('ethereumjs-util');
+const Wallet = require('./wallet.js');
 
 const txSchema = Joi.object().keys({
     nonce: Joi.string().regex(/^0x[0-9a-fA-F]{1,64}$/i),
@@ -40,4 +41,64 @@ exports.generateCancelOrderData = function (order) {
     const method = abi.methodID('cancelOrder', ['address[3]', 'uint[7]', 'bool', 'uint8', 'uint8', 'bytes32', 'bytes32']).toString('hex');
 
     return '0x' + method + data;
+};
+
+this.generateTx = async
+
+function (rawTx, account) {
+
+
+    if (!rawTx) {
+        throw new Error(" Raw Tx is required")
+    }
+
+    if (!account) {
+
+        throw new Error('Account is required')
+    }
+
+    const valid_result = Joi.validate(rawTx, txSchema);
+
+    if (valid_result.error) {
+        throw new Error('invalid Tx data ');
+    }
+
+    if (!account.privateKey || !account.balance) {
+
+
+        throw new Error('privateKey or balance is missing');
+
+    }
+
+    const wallet = new Wallet();
+    wallet.setPrivateKey(ethUtil.toBuffer(privateKey));
+
+
+    const gasLimit = new BigNumber(Number(rawTx.gasLimit));
+
+    if (gasLimit.lessThan(21000)) {
+        throw  new Error('gasLimit must be greater than 21000');
+    }
+
+    if (gasLimit.greaterThan(5000000)) {
+        throw  new Error('gasLimit is too big');
+    }
+
+    // const balance = await this.getAccountBalance(wallet.getAddress());
+    //
+    // const needBalance = new BigNumber(Number(rawTx.value)) + gasLimit * new BigNumber(Number(rawTx.gasPrice));
+    //
+    // if (balance.lessThan(needBalance)) {
+    //
+    //     throw new Error('Balance  is not enough')
+    // }
+
+    rawTx.chainId = rawTx.chainId || 1;
+
+    const signed = signer.signEthTx(rawTx, privateKey);
+    return {
+        tx: rawTx,
+        signedTx: signed
+    }
+
 };
