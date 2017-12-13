@@ -4,13 +4,13 @@
   "description": "Loopring javascript library",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/loopring/loopring.js.git"
+    "url": "git+https://github.com/bung87/loopring.js.git"
   },
   "keywords": [],
   "author": "",
   "license": "Apache-2.0",
-  "bugs": "https://github.com/loopring/loopring.js/issues",
-  "homepage": "https://github.com/loopring/loopring.js#readme",
+  "bugs": "https://github.com/bung87/loopring.js/issues",
+  "homepage": "https://github.com/bung87/loopring.js#readme",
   "devDependencies": {
     "eslint": "^4.12.1",
     "eslint-config-standard": "^10.2.1",
