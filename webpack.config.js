@@ -18,7 +18,14 @@
 
 const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
 const Path = require('path');
-
+const defaultJSLoader = {
+        test: /\.js$/,
+        loader: 'babel-loader',
+        exclude: /(node_modules)/,
+        query: {
+            presets : ['es2015', 'stage-0']
+        }
+    }
 module.exports = {
     entry: './src/loopring.js',
     resolve: {
@@ -31,20 +38,24 @@ module.exports = {
         path: Path.join(__dirname, '/dist'),
         library: 'loopring',
         libraryTarget: 'umd',
-        filename: 'loopring.min.js'
+        filename: 'loopring.js'
     },
-    plugins: [
-        new UglifyJSPlugin({
-            exclude: /\/node_modules/,
-            parallel: true,
-            uglifyOptions: {
-                beautify: false,
-                ecma: 6,
-                compress: true,
-                comments: false
-            }
-        })
-    ],
+    // plugins: [
+    //     new UglifyJSPlugin({
+    //         exclude: /\/node_modules/,
+    //         parallel: true,
+    //         uglifyOptions: {
+    //             beautify: true,
+    //             ecma: 6,
+    //             minimize: false,
+    //             compress: false,
+    //             comments: false
+    //         }
+    //     })
+    // ],
+    module:{
+      loaders:[defaultJSLoader]
+    },
     externals: {
         axios: 'axios',
         'bignumber.js': 'BigNumber',
