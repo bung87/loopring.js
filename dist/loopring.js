@@ -12956,7 +12956,7 @@ exports.decryptMewV1ToPrivKey = function (keystore, password) {
 };
 
 exports.isKeystorePassRequired = function (keystore) {
-    switch (undefined.determineKeystoreType(keystore)) {
+    switch (exports.determineKeystoreType(keystore)) {
         case 'presale':
             return true;
         case 'v1-unencrypted':

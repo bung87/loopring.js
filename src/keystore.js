@@ -251,7 +251,7 @@ exports.decryptMewV1ToPrivKey = (keystore, password) =>
 
 exports.isKeystorePassRequired = (keystore) =>
 {
-    switch (this.determineKeystoreType(keystore))
+    switch (exports.determineKeystoreType(keystore))
     {
         case 'presale':
             return true;
