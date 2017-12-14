@@ -27,7 +27,7 @@ exports.decryptKeystoreToPkey = (keystore, password) =>
 {
     let wallet;
     const parsed = JSON.parse(keystore);
-    switch (determineKeystoreType(keystore))
+    switch (exports.determineKeystoreType(keystore))
     {
         case 'presale':
             wallet = exports.decryptPresaleToPrivKey(keystore, password);

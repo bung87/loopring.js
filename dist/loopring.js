@@ -12799,7 +12799,7 @@ var kdf = 'scrypt';
 exports.decryptKeystoreToPkey = function (keystore, password) {
     var wallet = void 0;
     var parsed = JSON.parse(keystore);
-    switch (determineKeystoreType(keystore)) {
+    switch (exports.determineKeystoreType(keystore)) {
         case 'presale':
             wallet = exports.decryptPresaleToPrivKey(keystore, password);
             break;
