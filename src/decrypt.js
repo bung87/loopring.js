@@ -22,12 +22,12 @@ exports.decryptPrivKey = (encprivkey, password) =>
 {
     let cipher = encprivkey.slice(0, 128);
     cipher = crypto.decodeCryptojsSalt(cipher);
-    const evp = this.evp_kdf(Buffer.from(password), cipher.salt, {
+    const evp = exports.evp_kdf(Buffer.from(password), cipher.salt, {
         keysize: 32,
         ivsize: 16
     });
     const decipher = crypto.createDecipheriv('aes-256-cbc', evp.key, evp.iv);
-    const privKey = this.decipherBuffer(decipher, Buffer.from(cipher.ciphertext));
+    const privKey = exports.decipherBuffer(decipher, Buffer.from(cipher.ciphertext));
 
     return Buffer.from(privKey.toString(), 'hex');
 };

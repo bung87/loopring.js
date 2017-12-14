@@ -27,22 +27,22 @@ exports.decryptKeystoreToPkey = (keystore, password) =>
 {
     let wallet;
     const parsed = JSON.parse(keystore);
-    switch (this.determineKeystoreType(keystore))
+    switch (determineKeystoreType(keystore))
     {
         case 'presale':
-            wallet = this.decryptPresaleToPrivKey(keystore, password);
+            wallet = exports.decryptPresaleToPrivKey(keystore, password);
             break;
         case 'v1-unencrypted':
             wallet = Buffer.from(parsed.private, 'hex');
             break;
         case 'v1-encrypted':
-            wallet = this.decryptMewV1ToPrivKey(keystore, password);
+            wallet = exports.decryptMewV1ToPrivKey(keystore, password);
             break;
         case 'v2-unencrypted':
             wallet = Buffer.from(parsed.privKey, 'hex');
             break;
         case 'v2-v3-utc':
-            wallet = this.decryptUtcKeystoreToPkey(keystore, password);
+            wallet = exports.decryptUtcKeystoreToPkey(keystore, password);
             break;
         default:
             return new Error('unrecognized type of keystore');
