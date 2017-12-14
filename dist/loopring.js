@@ -8236,12 +8236,12 @@ var crypto = __webpack_require__(17);
 exports.decryptPrivKey = function (encprivkey, password) {
     var cipher = encprivkey.slice(0, 128);
     cipher = crypto.decodeCryptojsSalt(cipher);
-    var evp = undefined.evp_kdf(Buffer.from(password), cipher.salt, {
+    var evp = exports.evp_kdf(Buffer.from(password), cipher.salt, {
         keysize: 32,
         ivsize: 16
     });
     var decipher = crypto.createDecipheriv('aes-256-cbc', evp.key, evp.iv);
-    var privKey = undefined.decipherBuffer(decipher, Buffer.from(cipher.ciphertext));
+    var privKey = exports.decipherBuffer(decipher, Buffer.from(cipher.ciphertext));
 
     return Buffer.from(privKey.toString(), 'hex');
 };
@@ -12799,21 +12799,21 @@ var kdf = 'scrypt';
 exports.decryptKeystoreToPkey = function (keystore, password) {
     var wallet = void 0;
     var parsed = JSON.parse(keystore);
-    switch (undefined.determineKeystoreType(keystore)) {
+    switch (determineKeystoreType(keystore)) {
         case 'presale':
-            wallet = undefined.decryptPresaleToPrivKey(keystore, password);
+            wallet = exports.decryptPresaleToPrivKey(keystore, password);
             break;
         case 'v1-unencrypted':
             wallet = Buffer.from(parsed.private, 'hex');
             break;
         case 'v1-encrypted':
-            wallet = undefined.decryptMewV1ToPrivKey(keystore, password);
+            wallet = exports.decryptMewV1ToPrivKey(keystore, password);
             break;
         case 'v2-unencrypted':
             wallet = Buffer.from(parsed.privKey, 'hex');
             break;
         case 'v2-v3-utc':
-            wallet = undefined.decryptUtcKeystoreToPkey(keystore, password);
+            wallet = exports.decryptUtcKeystoreToPkey(keystore, password);
             break;
         default:
             return new Error('unrecognized type of keystore');

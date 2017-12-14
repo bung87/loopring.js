@@ -6,6 +6,9 @@
     "type": "git",
     "url": "git+https://github.com/bung87/loopring.js.git"
   },
+  "scripts":{
+    "build":"./node_modules/webpack/bin/webpack.js"
+  },
   "keywords": [],
   "author": "",
   "license": "Apache-2.0",
